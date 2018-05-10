@@ -1,6 +1,12 @@
-class layer:
-    """CLASSE LAYER"""
+# Authors: Marco Urbano & Ciro Brandi.
+
+# Classe che descrive un layer della rete neurale.
+
+
+class Layer:
+
     def __init__(self, weights_matrix, b, g):
+
         self.weights_matrix = weights_matrix
         self.b = b
         self.g = g
