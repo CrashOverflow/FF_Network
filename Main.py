@@ -1,8 +1,7 @@
 # Authors: Ciro Brandi & Marco Urbano.
 
-from Net import *
-from Layer import *
-from array import array
+from workdir import Net
+from workdir import Layer as l
 import numpy as np
 
 print("Started building the Feed Forward Full Connected Neural Network! \n")
@@ -27,13 +26,23 @@ for i in range(0, n_layers):
     # Array dei pesi per il bias random tra 0 e 1
     b = 1 - 2 * np.random.rand(1, n_node_prec)
 
-
     # Salvo il numero di nodi del layer precendete
     n_node_prec = n_nodes
 
-    # Aggiungo il layer appena creato al vettore dei layer che sarà
-    # aggiunto alla rete.
-    array_layers.append(Layer(weights_matrix, b, "null"))
+    # Switch case hand made per scegliere la funzione di attivazione
+    # del layer (Python non ha gli switch :( )
+
+    print("Which activation function will have this layer? :")
+    print("1. Logistic sigmoid")
+    print("_______________________")
+
+    while True:
+        print("Choice: ")
+        choice = int(input())
+        if choice == 1:
+            array_layers.append(l.Layer_s(weights_matrix, b))
+            break
+
 
 
 # Stampa le matrici del layer
