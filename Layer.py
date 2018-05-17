@@ -7,7 +7,7 @@
 
 from abc import ABCMeta, abstractmethod
 import math
-
+import numpy as np
 
 class Layer(metaclass=ABCMeta):
 
@@ -26,6 +26,8 @@ class Layer(metaclass=ABCMeta):
     def actfun_der(self, x):
         pass
 
+    def lin_sum(self, z_prev):
+        self.a = np.sum([self.weights_matrix.dot(z_prev), self.b], axis=0)
 
 # Sottoclasse di Layer con funzione di attivazione Sigmoide.
 class Layer_s(Layer):
