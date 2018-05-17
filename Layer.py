@@ -11,11 +11,6 @@ import math
 
 class Layer(metaclass=ABCMeta):
 
-    def __init__(self, weights_matrix, b):
-
-        self.weights_matrix = weights_matrix
-        self.b = b
-
     def print_weights_matrix(self):
         print(self.weights_matrix)
 
@@ -34,6 +29,11 @@ class Layer(metaclass=ABCMeta):
 
 # Sottoclasse di Layer con funzione di attivazione Sigmoide.
 class Layer_s(Layer):
+
+    def __init__(self, weights_matrix, b):
+
+        self.weights_matrix = weights_matrix
+        self.b = b
 
     # Sigmoide = 1 / (1 + e ^ - x)
     def actfun(self, x):
