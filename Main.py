@@ -22,7 +22,7 @@ for i in range(0, n_layers):
 
     # Matrice dei pesi per ogni layer random tra 0 e 1
     weights_matrix = 1 - 2 * np.random.rand(n_nodes, n_node_prec)
-
+    print(weights_matrix);
     # Array dei pesi per il bias random tra 0 e 1
     b = 1 - 2 * np.random.rand(1, n_node_prec)
 
@@ -38,9 +38,11 @@ for i in range(0, n_layers):
 
     while True:
         print("Choice: ")
+        #TODO Controllo dell'input
         choice = int(input())
         if choice == 1:
-            array_layers.append(l.Layer_s(weights_matrix, b))
+            tmp = l.Layer_s(weights_matrix, b)
+            array_layers.append(tmp)
             break
 
 

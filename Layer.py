@@ -7,9 +7,13 @@
 
 from abc import ABCMeta, abstractmethod
 import math
-
+import numpy as np
 
 class Layer(metaclass=ABCMeta):
+
+    def __init__(self, weights_matrix, b):
+        self.weights_matrix = weights_matrix
+        self.b = b
 
     def print_weights_matrix(self):
         print(self.weights_matrix)
@@ -26,14 +30,13 @@ class Layer(metaclass=ABCMeta):
     def actfun_der(self, x):
         pass
 
+    def lin_sum(self, z_prev):
+        self.a = np.sum([self.weights_matrix.dot(z_prev), self.b], axis=0)
+
+
 
 # Sottoclasse di Layer con funzione di attivazione Sigmoide.
 class Layer_s(Layer):
-
-    def __init__(self, weights_matrix, b):
-
-        self.weights_matrix = weights_matrix
-        self.b = b
 
     # Sigmoide = 1 / (1 + e ^ - x)
     def actfun(self, x):
@@ -42,5 +45,6 @@ class Layer_s(Layer):
     # Derivata = s(x) * (1 - s(x))
     def actfun_der(self, x):
         return self.actfun(x)*(1 - self.actfun(x))
+
 
 
