@@ -1,6 +1,6 @@
+from workdir import Layer as l
+
 # Classe che rappresenta una singola rete Feed-Forward Full Connected.
-
-
 class Net:
 
     # L'array di layers sarà aggiunto dopo l'input dell'utente.
@@ -16,10 +16,50 @@ class Net:
     # - n_l -> n_layers
 
     def __init__(self, n_f, n_l):
-        n_features = n_f
-        n_layers = n_l
 
-    # Forward propagation per l'input x
+        self.n_features = n_f
+        self.n_layers = n_l
+        self.array_layers  = []
+
+        """All'inizio n_prev, ovvero il numero dei nodi dello strato
+           precedente corrisponderà al numero degli input X1, ..., Xd"""
+
+        n_prev = self.n_features
+
+        for i in range(0, self.n_layers):
+
+            print("Number of neurons for layer " + str(i) + ":")
+            n_nodes = int(input())
+
+            # Switch case hand made per scegliere la funzione di attivazione
+            # del layer (Python non ha gli switch :( )
+
+            print("Which activation function will have this layer? :")
+            print("1. Logistic sigmoid")
+            print("_______________________")
+
+            while True:
+                print("Choice: ")
+                choice = int(input())
+                if choice == 1:
+                    self.array_layers.append(l.Layer_s(n_nodes, n_prev))
+                    break
+
+            # Aggiorno il numero dei nodi precedenti per le connessioni.
+            n_prev = n_nodes
+
+    # Stampa della rete
+    def print(self):
+
+        # Stampa le matrici del layer
+        print("Printing the weight matrixes for every layer: \n")
+        i = 0
+        for lay in self.array_layers:
+            print("Layer " + str(i) + " weights matrix : \n")
+            lay.print_weights_matrix()
+            i = i + 1
+
+    #Forward propagation per l'input x
     def forward(self, x):
         pass
 

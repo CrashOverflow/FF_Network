@@ -9,7 +9,15 @@ from abc import ABCMeta, abstractmethod
 import math
 import numpy as np
 
+
 class Layer(metaclass=ABCMeta):
+
+    def __init__(self, n_neurons, n_connections):
+        # Costruisci la matrice dei pesi in maniera random tra 0 e 1.
+        self.weights_matrix = 1 - 2 * np.random.rand(n_neurons, n_connections)
+
+        # Array dei pesi per il bias random tra 0 e 1
+        self.b = 1 - 2 * np.random.rand(1, n_connections)
 
     def print_weights_matrix(self):
         print(self.weights_matrix)
@@ -21,6 +29,7 @@ class Layer(metaclass=ABCMeta):
     @abstractmethod
     def actfun(self, x):
         pass
+
     # Derivata della funzione di attivazione da implementare .
     @abstractmethod
     def actfun_der(self, x):
@@ -32,10 +41,6 @@ class Layer(metaclass=ABCMeta):
 # Sottoclasse di Layer con funzione di attivazione Sigmoide.
 class Layer_s(Layer):
 
-    def __init__(self, weights_matrix, b):
-
-        self.weights_matrix = weights_matrix
-        self.b = b
 
     # Sigmoide = 1 / (1 + e ^ - x)
     def actfun(self, x):
