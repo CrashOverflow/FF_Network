@@ -11,6 +11,10 @@ import numpy as np
 
 
 class Layer(metaclass=ABCMeta):
+    # Array degli input (a)
+    a = np.array([])
+    # Array degli output (z)
+    z = np.array([])
 
     def __init__(self, n_neurons, n_connections):
         # Costruisci la matrice dei pesi in maniera random tra 0 e 1.
@@ -35,16 +39,13 @@ class Layer(metaclass=ABCMeta):
     def actfun_der(self, x):
         pass
 
-    def lin_sum(self, z_prev):
-        self.a = np.sum([self.weights_matrix.dot(z_prev), self.b], axis=0)
-
 # Sottoclasse di Layer con funzione di attivazione Sigmoide.
 class Layer_s(Layer):
 
 
     # Sigmoide = 1 / (1 + e ^ - x)
     def actfun(self, x):
-        return 1 / (1 + math.exp(-x))
+        return 1 / (1 + np.exp(-x))
 
     # Derivata = s(x) * (1 - s(x))
     def actfun_der(self, x):

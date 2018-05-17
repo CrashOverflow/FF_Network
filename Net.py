@@ -1,4 +1,5 @@
 from workdir import Layer as l
+import numpy as np
 
 # Classe che rappresenta una singola rete Feed-Forward Full Connected.
 class Net:
@@ -59,11 +60,15 @@ class Net:
             lay.print_weights_matrix()
             i = i + 1
 
-    #Forward propagation per l'input x
+    # Forward propagation per l'input x
     def forward(self, x):
-        pass
-
-
+        z_prev = x
+        for l in self.array_layers:
+            a = np.sum([l.weights_matrix.dot(z_prev), l.b], axis=0)
+            z = l.actfun(a)
+            l.a = a
+            l.z = z
+            z_prev = z
 
 
 
