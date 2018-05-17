@@ -19,6 +19,9 @@ class Net:
         n_features = n_f
         n_layers = n_l
 
+    # Forward propagation per l'input x
+    def forward(self, x):
+        pass
 
 
 
