@@ -21,7 +21,7 @@ class Layer(metaclass=ABCMeta):
     @abstractmethod
     def actfun(self, x):
         pass
-    # Derivata della funzione di attivazione da implementare.
+    # Derivata della funzione di attivazione da implementare .
     @abstractmethod
     def actfun_der(self, x):
         pass
