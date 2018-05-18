@@ -19,7 +19,6 @@ class Layer(metaclass=ABCMeta):
     def __init__(self, n_neurons, n_connections):
         # Costruisci la matrice dei pesi in maniera random tra 0 e 1.
         self.weights_matrix = 1 - 2 * np.random.rand(n_neurons, n_connections)
-
         # Array dei pesi per il bias random tra 0 e 1
         self.b = 1 - 2 * np.random.rand(1, n_connections)
 
