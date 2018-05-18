@@ -74,6 +74,8 @@ class Net:
         for lay in self.array_layers:
             print("Layer " + str(i) + " weights matrix : \n")
             lay.print_weights_matrix()
+            print("bias: ")
+            lay.print_bias()
             i = i + 1
 
     # Forward propagation per l'input x
@@ -81,12 +83,11 @@ class Net:
         z_prev = x
 
         for layer in self.array_layers:
-            layer.print_weights_matrix()
-            print(z_prev)
-            result = layer.weights_matrix.dot(z_prev)
-            print(result)
-            a = result + layer.b
-            print(a)
+
+            # visto che la somma tra ndarray e array è un wrapper di
+            # ndarray si prende il primo elemento, che è a sua volta
+            # l'array risultante tra la somma del bias con la combinazione lineare.
+            a = (layer.weights_matrix.dot(z_prev) + layer.b[0])
             z = layer.actfun(a)
             layer.a = a
             layer.z = z
