@@ -2,6 +2,8 @@ from workdir import Layer as l
 import numpy as np
 
 # Classe che rappresenta una singola rete Feed-Forward Full Connected.
+# La funzione di errore "Somma di quadrati" è quella scelta per questa classe.
+# Vanno implementate sia TSS che Cross Entropy.
 class Net:
 
     # L'array di layers sarà aggiunto dopo l'input dell'utente.
@@ -92,6 +94,35 @@ class Net:
             layer.a = a
             layer.z = z
             z_prev = z
+
+        # Restituisce l'array di output Y
+        return z_prev
+
+
+    # Funzione che calcola la i delta per ogni layer
+    # per la rete con funzione di errore TSS (Total Sum of Squares.)
+    def backpro_tss(self, X, T):
+
+        # Effettua la forward per l'input X
+        Y = self.forward(X)
+
+        # Il delta per lo strato di output è
+        # uguale a -------> f'(a) * (Y - T)
+        # Y è l'array di output, T quello dei labels (e.g. [0, 0, 0, 1])
+        self.array_layers[self.n_layers - 1].delta = \
+            np.dot(self.array_layers[self.n_layers - 1].actfun_der(Y), (Y - T))
+
+        # Calcola il delta per i layer a ritroso.
+        for i in range(self.n_layers -1, -1, -1):
+
+            # delta_temporaneo = W ^ i .* D ^ i-1
+            # calcolato con prodotto punto-punto.
+            delta = np.dot(self.array_layers[i + 1].delta,
+                           self.array_layers[i].weights_matrix)
+
+            # D ^ i = delta_temporaneo .*
+            self.array_layers[i].delta = np.dot(self.array_layers[i].actfun_der(self.array_layers[i].z),
+                                                delta)
 
 
 

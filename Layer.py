@@ -47,7 +47,8 @@ class Layer_s(Layer):
         return 1 / (1 + np.exp(-x))
 
     # Derivata = s(x) * (1 - s(x))
+    # Implementato usando il prodotto punto-punto con numpy
     def actfun_der(self, x):
-        return self.actfun(x)*(1 - self.actfun(x))
+        return np.dot(self.actfun(x), (1 - self.actfun(x)))
 
 
