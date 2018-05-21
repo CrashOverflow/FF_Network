@@ -89,7 +89,9 @@ class Net:
             # visto che la somma tra ndarray e array è un wrapper di
             # ndarray si prende il primo elemento, che è a sua volta
             # l'array risultante tra la somma del bias con la combinazione lineare.
-            a = (layer.weights_matrix.dot(z_prev) + layer.b[0])
+
+            # (W^T * Z) + b
+            a = np.dot(z_prev, np.transpose(layer.weights_matrix)) + layer.b[0]
             z = layer.actfun(a)
             layer.a = a
             layer.z = z
@@ -113,14 +115,15 @@ class Net:
             np.dot(self.array_layers[self.n_layers - 1].actfun_der(Y), (Y - T))
 
         # Calcola il delta per i layer a ritroso.
-        for i in range(self.n_layers -1, -1, -1):
+        for i in range(self.n_layers -2, -1, -1):
 
-            # delta_temporaneo = W ^ i .* D ^ i-1
+            # delta_temporaneo = W ^ i .* D ^ i+1
             # calcolato con prodotto punto-punto.
-            delta = np.dot(self.array_layers[i + 1].delta,
-                           self.array_layers[i].weights_matrix)
 
-            # D ^ i = delta_temporaneo .*
+            delta = np.dot(self.array_layers[i + 1].delta,
+                           self.array_layers[i + 1].weights_matrix)
+
+            # D ^ i = delta_temporaneo .* f'(a)
             self.array_layers[i].delta = np.dot(self.array_layers[i].actfun_der(self.array_layers[i].z),
                                                 delta)
 

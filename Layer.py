@@ -28,6 +28,7 @@ class Layer(metaclass=ABCMeta):
     def print_bias(self):
         print(self.b)
 
+
     # Funzione di attivazione da implementare.
     @abstractmethod
     def actfun(self, x):
