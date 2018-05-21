@@ -118,7 +118,7 @@ class Net:
         for i in range(self.n_layers -2, -1, -1):
 
             # delta_temporaneo = W ^ i .* D ^ i+1
-            # calcolato con prodotto punto-punto.
+            # calcolato con prodotto tra matrici.
 
             delta = np.dot(self.array_layers[i + 1].delta,
                            self.array_layers[i + 1].weights_matrix)
