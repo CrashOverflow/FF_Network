@@ -1,10 +1,11 @@
 from workdir import Layer as l
 import numpy as np
 
+
 # Classe che rappresenta una singola rete Feed-Forward Full Connected.
-# La funzione di errore "Somma di quadrati" è quella scelta per questa classe.
-# Vanno implementate sia TSS che Cross Entropy.
-class Net:
+# La funzione di errore è stata implementata utilizzando il Behavioral Pattern STRATEGY:
+# per scegliere una particolare funzione di errore basta fornire un oggetto di classe ErrorF.
+class Net():
 
     # L'array di layers sarà aggiunto dopo l'input dell'utente.
     # w_layers = null.
@@ -32,9 +33,11 @@ class Net:
     # Raises ValueError exception if values of neurons_list
     # or actfun_list contain errors. (e.g. activation function
     # not existent)
-    def __init__(self, n_f, neurons_list, actfun_list):
+    def __init__(self, n_f, neurons_list, actfun_list, error):
         try:
             if(len(neurons_list) == len(actfun_list)):
+                # Strategia per il calcolo dell'errore.
+                self.error = error
 
                 self.n_features = n_f
                 self.array_layers = []
@@ -50,9 +53,10 @@ class Net:
 
                     # Switch case hand made per scegliere la funzione di attivazione
                     # del layer (Python non ha gli switch :( )
-
-                    if actfun_list[i] == 1:
-                            self.array_layers.append(l.Layer_s(n_nodes, n_prev))
+                    if actfun_list[i] == 0:
+                        self.array_layers.append(l.Layer_i(n_nodes, n_prev))
+                    elif actfun_list[i] == 1:
+                        self.array_layers.append(l.Layer_s(n_nodes, n_prev))
                     else:
                         raise ValueError('Function with code ' + str(actfun_list[i]) +
                                          'doesn\'t exists!')
@@ -78,6 +82,8 @@ class Net:
             lay.print_weights_matrix()
             print("bias: ")
             lay.print_bias()
+            print("delta: ")
+            lay.print_delta()
             i = i + 1
 
     # Forward propagation per l'input x
@@ -90,7 +96,7 @@ class Net:
             # ndarray si prende il primo elemento, che è a sua volta
             # l'array risultante tra la somma del bias con la combinazione lineare.
 
-            # (W^T * Z) + b
+            # (W ^ T * Z) + b
             a = np.dot(z_prev, np.transpose(layer.weights_matrix)) + layer.b[0]
             z = layer.actfun(a)
             layer.a = a
@@ -100,10 +106,9 @@ class Net:
         # Restituisce l'array di output Y
         return z_prev
 
-
-    # Funzione che calcola la i delta per ogni layer
-    # per la rete con funzione di errore TSS (Total Sum of Squares.)
-    def backpro_tss(self, X, T):
+    # Funzione che calcola la i delta per ogni layer.
+    # E' indipendente dalla funzione di Errore e di Attivazione scelta.
+    def backprop(self, X, T):
 
         # Effettua la forward per l'input X
         Y = self.forward(X)
@@ -112,14 +117,13 @@ class Net:
         # uguale a -------> f'(a) * (Y - T)
         # Y è l'array di output, T quello dei labels (e.g. [0, 0, 0, 1])
         self.array_layers[self.n_layers - 1].delta = \
-            np.dot(self.array_layers[self.n_layers - 1].actfun_der(Y), (Y - T))
+            np.dot(self.array_layers[self.n_layers - 1].actfun_der(Y), self.error.fun(Y, T))
 
         # Calcola il delta per i layer a ritroso.
         for i in range(self.n_layers -2, -1, -1):
 
-            # delta_temporaneo = W ^ i .* D ^ i+1
+            # delta_temporaneo = W ^ i+1 .* D ^ i+1
             # calcolato con prodotto tra matrici.
-
             delta = np.dot(self.array_layers[i + 1].delta,
                            self.array_layers[i + 1].weights_matrix)
 
@@ -128,5 +132,20 @@ class Net:
                                                 delta)
 
 
+    # Calcola le derivate per ogni livello.
+    def comp_der(self):
+        for i in range(0, self.n_layers - 1):
+            print(self.array_layers[i].delta.shape)
+            print(self.array_layers[i].z.shape)
 
+            self.array_layers[i].der_w = \
+                                    np.dot(self.array_layers[i].delta,
+                                           self.array_layers[i].z)
+            print("Matrice derivata, layer " + str(i) + ": \n")
+            print(self.array_layers[i].der_w)
 
+            print("Array dei delta, layer "+ str(i) + ": \n")
+            print(self.array_layers[i].delta)
+            self.array_layers[i].der_b = np.sum(self.array_layers[i].delta)
+            print("Derivata bias, layer " + str(i) + ": \n")
+            print(self.array_layers[i].der_b)
