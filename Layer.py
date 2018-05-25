@@ -20,9 +20,9 @@ class Layer(metaclass=ABCMeta):
     # Array dei delta
     delta = np.array([])
     # Derivata matrice dei pesi.
-    #der_w = np.array([])
+    der_w = np.array([])
     # Derivata array bias.
-    #der_b = np.array([])
+    der_b = np.array([])
 
     def __init__(self, n_neurons, n_connections):
         # Costruisci la matrice dei pesi in maniera random tra 0 e 1.

@@ -1,5 +1,7 @@
 from workdir import Layer as l
+from workdir import Error as Error
 import numpy as np
+import copy as cp
 
 
 # Classe che rappresenta una singola rete Feed-Forward Full Connected.
@@ -133,19 +135,69 @@ class Net():
 
 
     # Calcola le derivate per ogni livello.
-    def comp_der(self):
+    def compute_derivatives(self):
         for i in range(0, self.n_layers - 1):
-            print(self.array_layers[i].delta.shape)
-            print(self.array_layers[i].z.shape)
-
+            # W' = delta' * Z
             self.array_layers[i].der_w = \
-                                    np.dot(self.array_layers[i].delta,
-                                           self.array_layers[i].z)
-            print("Matrice derivata, layer " + str(i) + ": \n")
-            print(self.array_layers[i].der_w)
+                np.transpose(self.array_layers[i].delta) * self.array_layers[i].z
+            # b' = delta
+            self.array_layers[i].der_b = self.array_layers[i].delta
 
-            print("Array dei delta, layer "+ str(i) + ": \n")
-            print(self.array_layers[i].delta)
-            self.array_layers[i].der_b = np.sum(self.array_layers[i].delta)
-            print("Derivata bias, layer " + str(i) + ": \n")
-            print(self.array_layers[i].der_b)
+
+    # Aggiornamento dei pesi
+    def update_weights(self, eta):
+        for l in self.array_layers:
+            l.weights_matrix = l.weights_matrix - (eta * l.der_w)
+            l.b = l.der_b - (eta * l.der_b)
+
+
+
+    # Train della rete.
+    # Parametri:
+    #    - X : training set
+    #    - T : labels del training set
+    #    - V : validation test
+    #    - eta: learning rate
+    #    - epoch: numero di epoche.
+    def online_train(self, X, x_label, V, v_label, eta, epoch):
+        x_size = np.size(X, 0)
+        v_size = np.size(V, 0)
+
+        prev_net = cp.deepcopy(self)
+
+        for i in range(1, epoch):
+            for j in range(0, x_size):
+                prev_net.backprop(X[j], x_label[j])
+                prev_net.compute_derivatives()
+                prev_net.update_weights(eta)
+
+            # Copia la rete attuale dopo l'aggiornamento dei pesi.
+            curr_net = cp.deepcopy(prev_net)
+
+            # Calcolo dell'errore sul training set.
+            err_X = 0
+            for j in range(0, x_size):
+                Y = curr_net.forward(X[j])
+
+                # Controllo per applicare softmax in caso di CrossEntropy.
+                if(isinstance(curr_net.error, Error.CrossEntropy)):
+                    Y = curr_net.error.softmax(Y)
+
+                err_X = err_X + self.error.compute_error(Y, x_label[j])
+
+            # Calcolo dell'errore sul validation set
+            err_V = 0
+            for j in range(0, v_size):
+                Y = curr_net.forward(V[j])
+                # Controllo per applicare softmax in caso di CrossEntropy.
+                if (isinstance(curr_net.error, Error.CrossEntropy)):
+                    Y = curr_net.error.softmax(Y)
+
+                err_V = err_V + self.error.compute_error(Y, v_label[j])
+
+
+
+
+
+
+

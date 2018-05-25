@@ -26,3 +26,7 @@ class CrossEntropy(Error):
 
     def fun(self, Y, T):
         return self.softmax(Y) - T
+
+    def compute_error(self, Y, T):
+        err = np.sum(T * np.log(Y))
+
