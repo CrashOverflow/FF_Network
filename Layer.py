@@ -6,7 +6,6 @@
 
 
 from abc import ABCMeta, abstractmethod
-import math
 import numpy as np
 
 
@@ -15,6 +14,15 @@ class Layer(metaclass=ABCMeta):
     a = np.array([])
     # Array degli output (z)
     z = np.array([])
+
+    # LEARNING ATTRIBUTES #
+
+    # Array dei delta
+    delta = np.array([])
+    # Derivata matrice dei pesi.
+    #der_w = np.array([])
+    # Derivata array bias.
+    #der_b = np.array([])
 
     def __init__(self, n_neurons, n_connections):
         # Costruisci la matrice dei pesi in maniera random tra 0 e 1.
@@ -27,6 +35,9 @@ class Layer(metaclass=ABCMeta):
 
     def print_bias(self):
         print(self.b)
+
+    def print_delta(self):
+        print(self.delta)
 
 
     # Funzione di attivazione da implementare.
@@ -52,4 +63,15 @@ class Layer_s(Layer):
     def actfun_der(self, x):
         return np.dot(self.actfun(x), (1 - self.actfun(x)))
 
+# Sottoclasse di Layer con funzione di attivazione Identità.
+# Dato che la sua derivata è uguale a 1 non è mai usata come funzione
+# di attivazione degli hidden layers.
+class Layer_i(Layer):
 
+
+    # Identità = x
+    def actfun(self, x):
+        return x
+    # Derivata = 1
+    def actfun_der(self, x):
+        return 1
