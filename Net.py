@@ -113,16 +113,13 @@ class Net:
         # Y è l'array di output, T quello dei labels (e.g. [0, 0, 0, 1])
         self.array_layers[self.n_layers - 1].delta = \
             np.dot(self.array_layers[self.n_layers - 1].actfun_der(Y), (Y - T))
-
         # Calcola il delta per i layer a ritroso.
         for i in range(self.n_layers -2, -1, -1):
 
             # delta_temporaneo = W ^ i .* D ^ i+1
             # calcolato con prodotto tra matrici.
-
             delta = np.dot(self.array_layers[i + 1].delta,
                            self.array_layers[i + 1].weights_matrix)
-
             # D ^ i = delta_temporaneo .* f'(a)
             self.array_layers[i].delta = np.dot(self.array_layers[i].actfun_der(self.array_layers[i].z),
                                                 delta)
