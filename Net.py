@@ -94,12 +94,11 @@ class Net():
 
         for layer in self.array_layers:
 
-            # visto che la somma tra ndarray e array è un wrapper di
-            # ndarray si prende il primo elemento, che è a sua volta
+
             # l'array risultante tra la somma del bias con la combinazione lineare.
 
             # (W ^ T * Z) + b
-            a = np.dot(z_prev, np.transpose(layer.weights_matrix)) + layer.b[0]
+            a = np.dot(z_prev, np.transpose(layer.weights_matrix)) + layer.b
             z = layer.actfun(a)
             layer.a = a
             layer.z = z
@@ -119,8 +118,10 @@ class Net():
         # uguale a -------> f'(a) * (Y - T)
         # Y è l'array di output, T quello dei labels (e.g. [0, 0, 0, 1])
         self.array_layers[self.n_layers - 1].delta = \
-            np.dot(self.array_layers[self.n_layers - 1].actfun_der(Y), self.error.fun(Y, T))
+            self.array_layers[self.n_layers - 1].actfun_der(Y) * self.error.fun(Y, T)
 
+        temp = self.array_layers[self.n_layers - 1].actfun_der(Y)
+        delt = self.array_layers[self.n_layers - 1].delta
         # Calcola il delta per i layer a ritroso.
         for i in range(self.n_layers -2, -1, -1):
 
@@ -139,9 +140,12 @@ class Net():
         for i in range(0, self.n_layers - 1):
             # W' = delta' * Z
             self.array_layers[i].der_w = \
-                np.transpose(self.array_layers[i].delta) * self.array_layers[i].z
+                np.dot(np.transpose(np.expand_dims(self.array_layers[i].delta, axis=0)),
+                       np.expand_dims(self.array_layers[i].z, axis = 0))
+            W1 = self.array_layers[i].der_w
             # b' = delta
             self.array_layers[i].der_b = self.array_layers[i].delta
+            B1 = self.array_layers[i].der_b
 
 
     # Aggiornamento dei pesi
@@ -160,13 +164,18 @@ class Net():
     #    - eta: learning rate
     #    - epoch: numero di epoche.
     def online_train(self, X, x_label, V, v_label, eta, epoch):
-        x_size = np.size(X, 0)
-        v_size = np.size(V, 0)
+        x_size = np.size(X, 0) // 5
+        v_size = np.size(V, 0) // 5
+
+        x_err_array = []
+        v_err_array = []
 
         prev_net = cp.deepcopy(self)
 
         for i in range(1, epoch):
+            print("Current status: EPOCH " + str(i) + "\n")
             for j in range(0, x_size):
+                #print("Training with X[" + str(j) + "] \n")
                 prev_net.backprop(X[j], x_label[j])
                 prev_net.compute_derivatives()
                 prev_net.update_weights(eta)
@@ -185,6 +194,10 @@ class Net():
 
                 err_X = err_X + self.error.compute_error(Y, x_label[j])
 
+            # Aggiorna l'errore nel vettore degli errori per stamparlo
+            x_err_array.append(err_X)
+
+
             # Calcolo dell'errore sul validation set
             err_V = 0
             for j in range(0, v_size):
@@ -195,9 +208,23 @@ class Net():
 
                 err_V = err_V + self.error.compute_error(Y, v_label[j])
 
+            # Aggiorna l'errore nel vettore degli errori per stamparlo
+            v_err_array.append(err_V)
 
 
+            #if(err_V < err_X) :
+                #prev_net = curr_net
+            #else:
+                #break
 
+        # Stampa degli errori per ogni epoca.
+        for i in range(1, epoch):
+            print("Epoca: " + str(i) + "|| ERRORE training:" + str(x_err_array[i]) + "|| Errore validation:"
+                  + str(v_err_array[i]) + "\n")
+
+
+        # Ritorna la rete neurale con errore minore.
+        return prev_net
 
 
 

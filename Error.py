@@ -17,6 +17,9 @@ class TSS(Error):
     def fun(self, Y, T):
         return Y - T
 
+    def compute_error(self, Y, T):
+        return np.power(np.sum(Y - T), 2)
+
 class CrossEntropy(Error):
     def softmax(self, Y):
         t_sum = sum(np.exp(Y))
@@ -28,5 +31,5 @@ class CrossEntropy(Error):
         return self.softmax(Y) - T
 
     def compute_error(self, Y, T):
-        err = np.sum(T * np.log(Y))
+        return - np.sum(T * np.log(Y))
 
