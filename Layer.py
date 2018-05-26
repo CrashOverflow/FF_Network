@@ -30,7 +30,7 @@ class Layer(metaclass=ABCMeta):
         # Array dei pesi per il bias random tra 0 e 1.
         # visto che rand restituisce una matrice seleziono solo il vettore riga.
         random_2D = 1 - 2 * np.random.rand(1, n_neurons)
-        self.b =  random_2D[0]
+        self.b = random_2D[0]
 
     def print_weights_matrix(self):
         print(self.weights_matrix)

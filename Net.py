@@ -40,7 +40,6 @@ class Net():
             if(len(neurons_list) == len(actfun_list)):
                 # Strategia per il calcolo dell'errore.
                 self.error = error
-
                 self.n_features = n_f
                 self.array_layers = []
                 self.n_layers = len(neurons_list)
@@ -136,12 +135,18 @@ class Net():
 
 
     # Calcola le derivate per ogni livello.
-    def compute_derivatives(self):
+    def compute_derivatives(self, X):
         for i in range(0, self.n_layers - 1):
             # W' = delta' * Z
-            self.array_layers[i].der_w = \
-                np.dot(np.transpose(np.expand_dims(self.array_layers[i].delta, axis=0)),
-                       np.expand_dims(self.array_layers[i].z, axis = 0))
+            if i == 0:
+                self.array_layers[i].der_w = \
+                        np.dot(np.transpose(np.expand_dims(self.array_layers[i].delta, axis=0)),
+                np.expand_dims(X, axis = 0))
+            else:
+                self.array_layers[i].der_w = \
+                    np.dot(np.transpose(np.expand_dims(self.array_layers[i].delta, axis=0)),
+                           np.expand_dims(self.array_layers[i].z, axis = 0))
+
             W1 = self.array_layers[i].der_w
             # b' = delta
             self.array_layers[i].der_b = self.array_layers[i].delta
@@ -175,9 +180,10 @@ class Net():
         for i in range(1, epoch):
             print("Current status: EPOCH " + str(i) + "\n")
             for j in range(0, x_size):
+
                 #print("Training with X[" + str(j) + "] \n")
                 prev_net.backprop(X[j], x_label[j])
-                prev_net.compute_derivatives()
+                prev_net.compute_derivatives(X[j])
                 prev_net.update_weights(eta)
 
             # Copia la rete attuale dopo l'aggiornamento dei pesi.
@@ -193,10 +199,8 @@ class Net():
                     Y = curr_net.error.softmax(Y)
 
                 err_X = err_X + self.error.compute_error(Y, x_label[j])
-
             # Aggiorna l'errore nel vettore degli errori per stamparlo
             x_err_array.append(err_X)
-
 
             # Calcolo dell'errore sul validation set
             err_V = 0
