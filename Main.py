@@ -10,7 +10,6 @@ mnist = input_data.read_data_sets("MNIST_data/", one_hot=True)
 
 train_set = mnist.train.images
 label_train_set = mnist.train.labels
-v = mnist.validation
 validation_set = mnist.validation.images
 label_validation_set = mnist.validation.labels
 t = mnist.test
@@ -22,7 +21,7 @@ label_num = len(label_train_set[0])
 #print("Started building the Feed Forward Full Connected Neural Network! \n")
 my_net = N.Net(n_f, [5, label_num], [1, 0], E.CrossEntropy())
 #my_net.print()
-new_net = my_net.online_train(train_set, label_train_set, validation_set, label_validation_set, 0.1, 100)
+new_net = my_net.online_train(train_set, label_train_set, validation_set, label_validation_set, 0.5, 100)
 
 
 #my_net = N.Net(5, [5, 4], [1, 0], E.CrossEntropy())

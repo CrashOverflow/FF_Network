@@ -1,7 +1,7 @@
 from workdir import Layer as l
 from workdir import Error as Error
 import numpy as np
-import copy as cp
+import matplotlib.pyplot as plt
 
 
 # Classe che rappresenta una singola rete Feed-Forward Full Connected.
@@ -89,15 +89,18 @@ class Net():
 
     # Forward propagation per l'input x
     def forward(self, x):
-        z_prev = x
+        # Aggiunge una dimensione al vettore e lo traspone per farlo diventare
+        # vettore colonna.
+        z_prev = np.transpose(np.expand_dims(x, axis=0))
 
         for layer in self.array_layers:
 
 
             # l'array risultante tra la somma del bias con la combinazione lineare.
 
-            # (W ^ T * Z) + b
-            a = np.dot(z_prev, np.transpose(layer.weights_matrix)) + layer.b
+            # (W * Z ^ T) + b
+            # Ora Z sarà visto come vettore colonna.
+            a = np.dot(layer.weights_matrix, z_prev) + layer.b
             z = layer.actfun(a)
             layer.a = a
             layer.z = z
@@ -110,42 +113,47 @@ class Net():
     # E' indipendente dalla funzione di Errore e di Attivazione scelta.
     def backprop(self, X, T):
 
+        # Traspongo T poichè è visto come vettore riga
+        T = np.transpose(np.expand_dims(T, axis=0))
         # Effettua la forward per l'input X
         Y = self.forward(X)
 
         # Il delta per lo strato di output è
         # uguale a -------> f'(a) * (Y - T)
         # Y è l'array di output, T quello dei labels (e.g. [0, 0, 0, 1])
+        a = self.array_layers[self.n_layers - 1].a
         self.array_layers[self.n_layers - 1].delta = \
-            self.array_layers[self.n_layers - 1].actfun_der(Y) * self.error.fun(Y, T)
+            self.array_layers[self.n_layers - 1].actfun_der(a) * self.error.fun(Y, T)
 
-        temp = self.array_layers[self.n_layers - 1].actfun_der(Y)
+        err_fun = self.error.fun(Y, T)
+        temp = self.array_layers[self.n_layers - 1].actfun_der(a)
         delt = self.array_layers[self.n_layers - 1].delta
         # Calcola il delta per i layer a ritroso.
         for i in range(self.n_layers -2, -1, -1):
 
-            # delta_temporaneo = W ^ i+1 .* D ^ i+1
+            # delta_temporaneo = W(i+1) ^ T  .* D(i+1) ---> trasposto perchè deve tornare vettore riga
             # calcolato con prodotto tra matrici.
-            delta = np.dot(self.array_layers[i + 1].delta,
-                           self.array_layers[i + 1].weights_matrix)
+            delta = np.dot(
+                np.transpose(self.array_layers[i + 1].weights_matrix), self.array_layers[i+1].delta)
 
             # D ^ i = delta_temporaneo .* f'(a)
-            self.array_layers[i].delta = np.dot(self.array_layers[i].actfun_der(self.array_layers[i].z),
-                                                delta)
+            #attiv = self.array_layers[i].actfun_der(self.array_layers[i].a)
+            self.array_layers[i].delta = self.array_layers[i].actfun_der(self.array_layers[i].a) * delta
 
 
     # Calcola le derivate per ogni livello.
     def compute_derivatives(self, X):
         for i in range(0, self.n_layers - 1):
-            # W' = delta' * Z
+            # W' = delta * Z (nel primo layer Z = X)
             if i == 0:
+                deltoide = self.array_layers[i].delta
+                xoide = np.expand_dims(X, axis=0)
                 self.array_layers[i].der_w = \
-                        np.dot(np.transpose(np.expand_dims(self.array_layers[i].delta, axis=0)),
-                np.expand_dims(X, axis = 0))
+                        np.dot(self.array_layers[i].delta, np.expand_dims(X, axis = 0))
             else:
                 self.array_layers[i].der_w = \
                     np.dot(np.transpose(np.expand_dims(self.array_layers[i].delta, axis=0)),
-                           np.expand_dims(self.array_layers[i].z, axis = 0))
+                           np.expand_dims(self.array_layers[i - 1].z, axis = 0))
 
             W1 = self.array_layers[i].der_w
             # b' = delta
@@ -169,25 +177,25 @@ class Net():
     #    - eta: learning rate
     #    - epoch: numero di epoche.
     def online_train(self, X, x_label, V, v_label, eta, epoch):
-        x_size = np.size(X, 0) // 5
-        v_size = np.size(V, 0) // 5
+        x_size = np.size(X, 0) // 100
+        v_size = np.size(V, 0) // 50
 
         x_err_array = []
         v_err_array = []
 
-        prev_net = cp.deepcopy(self)
+        curr_net = self
 
         for i in range(1, epoch):
             print("Current status: EPOCH " + str(i) + "\n")
             for j in range(0, x_size):
 
                 #print("Training with X[" + str(j) + "] \n")
-                prev_net.backprop(X[j], x_label[j])
-                prev_net.compute_derivatives(X[j])
-                prev_net.update_weights(eta)
+                curr_net.backprop(X[j], x_label[j])
+                curr_net.compute_derivatives(X[j])
+                curr_net.update_weights(eta)
 
             # Copia la rete attuale dopo l'aggiornamento dei pesi.
-            curr_net = cp.deepcopy(prev_net)
+            #trained_net = cp.deepcopy(curr_net)
 
             # Calcolo dell'errore sul training set.
             err_X = 0
@@ -222,13 +230,23 @@ class Net():
                 #break
 
         # Stampa degli errori per ogni epoca.
-        for i in range(1, epoch):
-            print("Epoca: " + str(i) + "|| ERRORE training:" + str(x_err_array[i]) + "|| Errore validation:"
-                  + str(v_err_array[i]) + "\n")
+        #for i in range(0, epoch - 1):
+            #print("Epoca: " + str(i) + "|| ERRORE training:" + str(x_err_array[i]) + "|| Errore validation:"
+                  #+ str(v_err_array[i]) + "\n")
 
 
         # Ritorna la rete neurale con errore minore.
-        return prev_net
+
+        # Plotta
+        plt.plot(x_err_array)
+        plt.xlabel('Epoch')
+        plt.ylabel('Error')
+        plt.show()
+
+        plt.plot(v_err_array)
+        plt.xlabel('Epoch')
+        plt.ylabel('Error')
+        plt.show()
 
 
 

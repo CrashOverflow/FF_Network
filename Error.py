@@ -28,7 +28,7 @@ class CrossEntropy(Error):
         return [(i / t_sum) for i in z_exp]
 
     def fun(self, Y, T):
-        return self.softmax(Y) - T
+        return np.nan_to_num(self.softmax(Y) - T)
 
     def compute_error(self, Y, T):
         return -1 * np.sum(T * np.log(Y))

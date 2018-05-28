@@ -28,9 +28,8 @@ class Layer(metaclass=ABCMeta):
         # Costruisci la matrice dei pesi in maniera random tra 0 e 1.
         self.weights_matrix = 1 - 2 * np.random.rand(n_neurons, n_connections)
         # Array dei pesi per il bias random tra 0 e 1.
-        # visto che rand restituisce una matrice seleziono solo il vettore riga.
-        random_2D = 1 - 2 * np.random.rand(1, n_neurons)
-        self.b = random_2D[0]
+        # E' un vettore colonna.
+        self.b = 1 - 2 * np.random.rand(n_neurons, 1)
 
     def print_weights_matrix(self):
         print(self.weights_matrix)
@@ -64,7 +63,10 @@ class Layer_s(Layer):
     # Derivata = s(x) * (1 - s(x))
     # Implementato usando il prodotto punto-punto con numpy
     def actfun_der(self, x):
-        return np.dot(self.actfun(x), (1 - self.actfun(x)))
+        act = self.actfun(x)
+        act_1 = 1 - act
+        prod = act * act_1
+        return self.actfun(x) * (1 - self.actfun(x))
 
 # Sottoclasse di Layer con funzione di attivazione Identità.
 # Dato che la sua derivata è uguale a 1 non è mai usata come funzione
@@ -77,4 +79,4 @@ class Layer_i(Layer):
         return x
     # Derivata = 1
     def actfun_der(self, x):
-        return np.ones(len(x))
+        return np.ones((len(x), 1))
