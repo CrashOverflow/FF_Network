@@ -2,6 +2,7 @@ from workdir import Layer as l
 from workdir import Error as Error
 import numpy as np
 import matplotlib.pyplot as plt
+import copy as cp
 
 
 # Classe che rappresenta una singola rete Feed-Forward Full Connected.
@@ -125,9 +126,7 @@ class Net():
         self.array_layers[self.n_layers - 1].delta = \
             self.array_layers[self.n_layers - 1].actfun_der(a) * self.error.fun(Y, T)
 
-        err_fun = self.error.fun(Y, T)
-        temp = self.array_layers[self.n_layers - 1].actfun_der(a)
-        delt = self.array_layers[self.n_layers - 1].delta
+
         # Calcola il delta per i layer a ritroso.
         for i in range(self.n_layers -2, -1, -1):
 
@@ -146,8 +145,6 @@ class Net():
         for i in range(0, self.n_layers - 1):
             # W' = delta * Z (nel primo layer Z = X)
             if i == 0:
-                deltoide = self.array_layers[i].delta
-                xoide = np.expand_dims(X, axis=0)
                 self.array_layers[i].der_w = \
                         np.dot(self.array_layers[i].delta, np.expand_dims(X, axis = 0))
             else:
@@ -155,10 +152,8 @@ class Net():
                     np.dot(np.transpose(np.expand_dims(self.array_layers[i].delta, axis=0)),
                            np.expand_dims(self.array_layers[i - 1].z, axis = 0))
 
-            W1 = self.array_layers[i].der_w
             # b' = delta
             self.array_layers[i].der_b = self.array_layers[i].delta
-            B1 = self.array_layers[i].der_b
 
 
     # Aggiornamento dei pesi
@@ -177,7 +172,7 @@ class Net():
     #    - eta: learning rate
     #    - epoch: numero di epoche.
     def online_train(self, X, x_label, V, v_label, eta, epoch):
-        x_size = np.size(X, 0) // 100
+        x_size = np.size(X, 0) // 10
         v_size = np.size(V, 0) // 50
 
         x_err_array = []
@@ -195,7 +190,7 @@ class Net():
                 curr_net.update_weights(eta)
 
             # Copia la rete attuale dopo l'aggiornamento dei pesi.
-            #trained_net = cp.deepcopy(curr_net)
+            trained_net = cp.deepcopy(curr_net)
 
             # Calcolo dell'errore sul training set.
             err_X = 0
@@ -224,18 +219,13 @@ class Net():
             v_err_array.append(err_V)
 
 
-            #if(err_V < err_X) :
-                #prev_net = curr_net
-            #else:
-                #break
-
-        # Stampa degli errori per ogni epoca.
-        #for i in range(0, epoch - 1):
-            #print("Epoca: " + str(i) + "|| ERRORE training:" + str(x_err_array[i]) + "|| Errore validation:"
-                  #+ str(v_err_array[i]) + "\n")
+            if(err_V < err_X) :
+                prev_net = curr_net
+            else:
+                break
 
 
-        # Ritorna la rete neurale con errore minore.
+
 
         # Plotta
         plt.plot(x_err_array)
@@ -247,6 +237,28 @@ class Net():
         plt.xlabel('Epoch')
         plt.ylabel('Error')
         plt.show()
+
+        # Ritorna la rete neurale con errore minore.
+        return curr_net
+
+    # Funzione di testing della rete
+    def test(self, X, X_labels):
+        x_len = len(X) // 100
+        correct = 0
+        for i in range(0, x_len):
+            Y_p = self.forward(X[i])
+            Y_p = self.error.softmax(Y_p)
+            # Mette 1 nella posizione con probabilità massima e
+            # tutti 0 nelle altre.
+            Y_v = np.zeros(np.shape(Y_p))
+            Y_v[np.argmax(Y_p)] = 1
+
+            if np.all(np.transpose(np.expand_dims(X_labels[i], axis=0)) == Y_v):
+                correct = correct + 1
+
+        return correct
+
+
 
 
 

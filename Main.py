@@ -21,7 +21,9 @@ label_num = len(label_train_set[0])
 #print("Started building the Feed Forward Full Connected Neural Network! \n")
 my_net = N.Net(n_f, [5, label_num], [1, 0], E.CrossEntropy())
 #my_net.print()
-new_net = my_net.online_train(train_set, label_train_set, validation_set, label_validation_set, 0.5, 100)
+new_net = my_net.online_train(train_set, label_train_set, validation_set, label_validation_set, 0.1, 100)
+print("Accuracy of trained network on Validation: "+ str(new_net.test(validation_set, label_validation_set)) +"\n")
+#print("Accuracy of trained network on Training: "+ str(new_net.test(train_set, label_train_set)) +"\n")
 
 
 #my_net = N.Net(5, [5, 4], [1, 0], E.CrossEntropy())
