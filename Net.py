@@ -172,25 +172,21 @@ class Net():
     #    - eta: learning rate
     #    - epoch: numero di epoche.
     def online_train(self, X, x_label, V, v_label, eta, epoch):
-        x_size = np.size(X, 0) // 10
+        x_size = np.size(X, 0) // 100
         v_size = np.size(V, 0) // 50
 
         x_err_array = []
         v_err_array = []
 
-        curr_net = self
+        curr_net = cp.deepcopy(self);
+        prev_net = cp.deepcopy(self);
 
-        for i in range(1, epoch):
+        for i in range(0, epoch-1):
             print("Current status: EPOCH " + str(i) + "\n")
             for j in range(0, x_size):
-
-                #print("Training with X[" + str(j) + "] \n")
                 curr_net.backprop(X[j], x_label[j])
                 curr_net.compute_derivatives(X[j])
                 curr_net.update_weights(eta)
-
-            # Copia la rete attuale dopo l'aggiornamento dei pesi.
-            trained_net = cp.deepcopy(curr_net)
 
             # Calcolo dell'errore sul training set.
             err_X = 0
@@ -201,7 +197,7 @@ class Net():
                 if(isinstance(curr_net.error, Error.CrossEntropy)):
                     Y = curr_net.error.softmax(Y)
 
-                err_X = err_X + self.error.compute_error(Y, x_label[j])
+                err_X = err_X + self.error.compute_error(Y, np.transpose(np.expand_dims(x_label[j],axis=0)))
             # Aggiorna l'errore nel vettore degli errori per stamparlo
             x_err_array.append(err_X)
 
@@ -213,16 +209,18 @@ class Net():
                 if (isinstance(curr_net.error, Error.CrossEntropy)):
                     Y = curr_net.error.softmax(Y)
 
-                err_V = err_V + self.error.compute_error(Y, v_label[j])
+                err_V = err_V + self.error.compute_error(Y, np.transpose(np.expand_dims(v_label[j],axis=0)))
 
             # Aggiorna l'errore nel vettore degli errori per stamparlo
             v_err_array.append(err_V)
 
-
-            if(err_V < err_X) :
-                prev_net = curr_net
-            else:
-                break
+            if i != 0:
+                if err_V > v_err_array[i-1]:
+                    break
+                else:
+                    print(err_V)
+                    print(v_err_array[i-1])
+                    prev_net = cp.deepcopy(curr_net)
 
 
 
@@ -239,11 +237,12 @@ class Net():
         plt.show()
 
         # Ritorna la rete neurale con errore minore.
-        return curr_net
+        return prev_net
 
     # Funzione di testing della rete
     def test(self, X, X_labels):
         x_len = len(X) // 100
+        print(x_len)
         correct = 0
         for i in range(0, x_len):
             Y_p = self.forward(X[i])

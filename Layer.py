@@ -57,7 +57,8 @@ class Layer_s(Layer):
 
     # Sigmoide = 1 / (1 + e ^ - x)
     def actfun(self, x):
-        return logistic.pdf(x)
+        #return logistic.pdf(x)
+        return logistic.cdf(x)
         #return 1 / (1 + np.exp(-x))
 
     # Derivata = s(x) * (1 - s(x))
