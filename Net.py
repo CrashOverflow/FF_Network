@@ -88,6 +88,14 @@ class Net():
             lay.print_delta()
             i = i + 1
 
+    # Inizializza on-demand la matrice dei valori di aggiornamento
+    # per l'RPROP. E' stato scelto di inizializzarla solo on demand
+    # poichè non serve per la discesa del gradiente classica.
+    def init_rprop(self):
+        for l in self.array_layers:
+            l.init_layer_rprop()
+
+
     # Forward propagation per l'input x
     def forward(self, x):
         # Aggiunge una dimensione al vettore e lo traspone per farlo diventare
@@ -163,7 +171,6 @@ class Net():
             l.b = l.der_b - (eta * l.der_b)
 
 
-
     # Train della rete.
     # Parametri:
     #    - X : training set
@@ -178,8 +185,8 @@ class Net():
         x_err_array = []
         v_err_array = []
 
-        curr_net = cp.deepcopy(self);
-        prev_net = cp.deepcopy(self);
+        curr_net = cp.deepcopy(self)
+        prev_net = cp.deepcopy(self)
 
         for i in range(0, epoch-1):
             print("Current status: EPOCH " + str(i) + "\n")
@@ -239,9 +246,139 @@ class Net():
         # Ritorna la rete neurale con errore minore.
         return prev_net
 
+    # Accumula le derivate dei pesi. E' la funzione usata nella modalità di training
+    # Batch.
+    def cumulate_derivatives(self, X):
+        for i in range(0, self.n_layers - 1):
+            # W' = W' + delta * Z (nel primo layer Z = X)
+            if i == 0:
+                self.array_layers[i].der_w = self.array_layers[i].der_w +\
+                    np.dot(self.array_layers[i].delta, np.expand_dims(X, axis=0))
+            else:
+                self.array_layers[i].der_w = self.array_layers[i].der_w +\
+                           np.dot(np.transpose(np.expand_dims(self.array_layers[i].delta, axis=0)),
+                           np.expand_dims(self.array_layers[i - 1].z, axis=0))
+
+            # b' = delta
+            self.array_layers[i].der_b = self.array_layers[i].der_b + self.array_layers[i].delta
+
+    # Funzione per resettare der_w e der_b per ogni epoca nel batch training.
+    def reset_derivatives(self):
+        for l in self.array_layers:
+            l.der_w = l.der_w * 0
+            l.der_b = l.der_b * 0
+
+    # Aggiornamento dei pesi con RPROP usando eta+ e eta-
+    def update_rprop(self, eta_m, eta_p, min_update, max_update):
+        for l in self.array_layers:
+            for i in range(0, l.der_w.shape[0] - 1):
+                for j in range(0, l.der_w.shape[1] - 1):
+                    if l.der_w[i][j]*l.der_w_prev_epoch[i][j] > 0:
+                        # Allora le derivate hanno lo stesso segno
+                        l.update_values_rprop[i][j] = np.minimum(l.update_values_rprop[i][j]
+                                                   *eta_p, max_update)
+                        l.weight_diff_prev[i][j] = (-1 * np.sign(l.der_w[i][j])) * l.update_values_rprop[i][j]
+                        l.weights_matrix[i][j] = l.weights_matrix[i][j] + l.weight_diff_prev[i][j]
+                    elif l.der_w[i][j]*l.der_w_prev_epoch[i][j] < 0:
+                        l.update_values_rprop[i][j] = np.maximum(l.update_values_rprop[i][j]
+                                                  * eta_m, min_update)
+                        l.weights_matrix[i][j] = l.weights_matrix[i][j] + l.weight_diff_prev[i][j]
+                        # Setta la derivata a 0 poichè deve tornare indietro visto che si è
+                        # saltato il minimo.
+                        l.der_w[i][j] = 0
+                    else:
+                        bombolo = l.der_w[i][j]
+                        ohhhh = l.update_values_rprop[i][j]
+                        l.weight_diff_prev[i][j] = (-1 * np.sign(l.der_w[i][j])) * l.update_values_rprop[i][j]
+
+
+
+
+    def rprop_batch_train(self, X, x_label, V, v_label, epoch, eta_m = 0.5, eta_p = 1.2):
+        x_size = np.size(X, 0) // 50
+        v_size = np.size(V, 0) // 50
+
+        x_err_array = []
+        v_err_array = []
+
+        # Inizializza la matrice dei valori di aggiornamento a 0.1
+        self.init_rprop()
+
+        curr_net = cp.deepcopy(self)
+        prev_net = cp.deepcopy(self)
+
+
+        for i in range(0, epoch - 1):
+            err_X = 0
+            print("Current status: EPOCH " + str(i) + "\n")
+            for j in range(0, x_size):
+                curr_net.backprop(X[j], x_label[j])
+                curr_net.cumulate_derivatives(X[j])
+
+                # Calcolo dell'errore sul training set.
+
+                Y = curr_net.forward(X[j])
+
+                # Controllo per applicare softmax in caso di CrossEntropy.
+                if isinstance(curr_net.error, Error.CrossEntropy):
+                    Y = curr_net.error.softmax(Y)
+
+                err_X = err_X + self.error.compute_error(Y, np.transpose(np.expand_dims(x_label[j], axis=0)))
+
+
+            # Aggiorna l'errore nel vettore degli errori per stamparlo
+            x_err_array.append(err_X)
+
+            # Aggiornamento dei pesi.
+            curr_net.update_rprop(eta_m, eta_p, 1 * np.exp(-6), 50.0)
+            curr_net.reset_derivatives()
+
+            # Salvo le derivate dell'epoca precedente.
+            for l in self.array_layers:
+                l.der_w_prev_epoch = l.der_w
+                l.der_b_prev_epoch = l.der_b
+
+            # Calcolo dell'errore sul validation set
+            err_V = 0
+            for j in range(0, v_size):
+                Y = curr_net.forward(V[j])
+                # Controllo per applicare softmax in caso di CrossEntropy.
+                if isinstance(curr_net.error, Error.CrossEntropy):
+                    Y = curr_net.error.softmax(Y)
+
+                err_V = err_V + self.error.compute_error(Y, np.transpose(np.expand_dims(v_label[j], axis=0)))
+
+            # Aggiorna l'errore nel vettore degli errori per stamparlo
+            v_err_array.append(err_V)
+
+            if i != 0:
+                if err_V > v_err_array[i - 1]:
+                    break
+                else:
+                    print(err_V)
+                    print(v_err_array[i - 1])
+                    prev_net = cp.deepcopy(curr_net)
+
+        # Plotta
+        plt.plot(x_err_array)
+        plt.xlabel('Epoch')
+        plt.ylabel('Error')
+        plt.show()
+
+        plt.plot(v_err_array)
+        plt.xlabel('Epoch')
+        plt.ylabel('Error')
+        plt.show()
+
+        # Ritorna la rete neurale con errore minore.
+        #return prev_net
+        return prev_net
+
+
+
     # Funzione di testing della rete
     def test(self, X, X_labels):
-        x_len = len(X) // 100
+        x_len = len(X) // 50
         print(x_len)
         correct = 0
         for i in range(0, x_len):
