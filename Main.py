@@ -22,8 +22,8 @@ label_num = len(label_train_set[0])
 for i in range(0,10):
     print("NETWORK"+str(i)+"\n")
     my_net = N.Net(n_f, [10, label_num], [1, 0], E.CrossEntropy())
-    #new_net = my_net.online_train(train_set, label_train_set, validation_set, label_validation_set, 0.1, 100)
-    new_net = my_net.rprop_batch_train(train_set, label_train_set, validation_set, label_validation_set, 100)
+    new_net = my_net.online_train(train_set, label_train_set, validation_set, label_validation_set, 0.1, 100)
+    #new_net = my_net.rprop_batch_train(train_set, label_train_set, validation_set, label_validation_set, 100)
     print("Accuracy of trained network on Validation: " + str(new_net.test(validation_set, label_validation_set)) + "\n")
 
 #my_net.print()

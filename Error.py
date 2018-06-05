@@ -24,12 +24,13 @@ class CrossEntropy(Error):
     def softmax(self, Y):
         t_sum = sum(np.exp(Y))
         z_exp = np.exp(Y)
-
+        # NON DEVE ESSERE UNA LISTA MA UN VETTORE!!
         return [(i / t_sum) for i in z_exp]
 
     def fun(self, Y, T):
         return np.nan_to_num(self.softmax(Y) - T)
 
     def compute_error(self, Y, T):
+        Y = Y
         return -1 * np.sum(T * np.log(Y))
 

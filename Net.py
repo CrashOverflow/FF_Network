@@ -49,7 +49,7 @@ class Net():
                 precedente corrisponderà al numero degli input X1, ..., Xd"""
                 n_prev = self.n_features
 
-                for i in range(0, len(neurons_list)):
+                for i in range(len(neurons_list)):
 
                     n_nodes = neurons_list[i]
 
@@ -150,15 +150,15 @@ class Net():
 
     # Calcola le derivate per ogni livello.
     def compute_derivatives(self, X):
-        for i in range(0, self.n_layers - 1):
+        for i in range(self.n_layers):
             # W' = delta * Z (nel primo layer Z = X)
             if i == 0:
                 self.array_layers[i].der_w = \
                         np.dot(self.array_layers[i].delta, np.expand_dims(X, axis = 0))
             else:
                 self.array_layers[i].der_w = \
-                    np.dot(np.transpose(np.expand_dims(self.array_layers[i].delta, axis=0)),
-                           np.expand_dims(self.array_layers[i - 1].z, axis = 0))
+                    np.dot(np.transpose(self.array_layers[i].delta),
+                           self.array_layers[i - 1].z)
 
             # b' = delta
             self.array_layers[i].der_b = self.array_layers[i].delta
@@ -249,15 +249,15 @@ class Net():
     # Accumula le derivate dei pesi. E' la funzione usata nella modalità di training
     # Batch.
     def cumulate_derivatives(self, X):
-        for i in range(0, self.n_layers - 1):
+        for i in range(self.n_layers):
             # W' = W' + delta * Z (nel primo layer Z = X)
             if i == 0:
-                self.array_layers[i].der_w = self.array_layers[i].der_w +\
+                 self.array_layers[i].der_w = self.array_layers[i].der_w +\
                     np.dot(self.array_layers[i].delta, np.expand_dims(X, axis=0))
             else:
                 self.array_layers[i].der_w = self.array_layers[i].der_w +\
-                           np.dot(np.transpose(np.expand_dims(self.array_layers[i].delta, axis=0)),
-                           np.expand_dims(self.array_layers[i - 1].z, axis=0))
+                           np.dot(np.transpose(self.array_layers[i].delta),
+                           self.array_layers[i - 1].z)
 
             # b' = delta
             self.array_layers[i].der_b = self.array_layers[i].der_b + self.array_layers[i].delta
@@ -265,31 +265,47 @@ class Net():
     # Funzione per resettare der_w e der_b per ogni epoca nel batch training.
     def reset_derivatives(self):
         for l in self.array_layers:
-            l.der_w = l.der_w * 0
-            l.der_b = l.der_b * 0
+            l.der_w = np.abs(l.der_w * 0)
+            l.der_b = np.abs(l.der_b * 0)
 
     # Aggiornamento dei pesi con RPROP usando eta+ e eta-
     def update_rprop(self, eta_m, eta_p, min_update, max_update):
         for l in self.array_layers:
-            for i in range(0, l.der_w.shape[0] - 1):
-                for j in range(0, l.der_w.shape[1] - 1):
+            for i in range(0, l.der_w.shape[0]):
+                for j in range(0, l.der_w.shape[1]):
                     if l.der_w[i][j]*l.der_w_prev_epoch[i][j] > 0:
                         # Allora le derivate hanno lo stesso segno
                         l.update_values_rprop[i][j] = np.minimum(l.update_values_rprop[i][j]
                                                    *eta_p, max_update)
-                        l.weight_diff_prev[i][j] = (-1 * np.sign(l.der_w[i][j])) * l.update_values_rprop[i][j]
-                        l.weights_matrix[i][j] = l.weights_matrix[i][j] + l.weight_diff_prev[i][j]
+                        l.weight_diff[i][j] = (-1 * np.sign(l.der_w[i][j])) * l.update_values_rprop[i][j]
+                        l.weights_matrix[i][j] = l.weights_matrix[i][j] + l.weight_diff[i][j]
                     elif l.der_w[i][j]*l.der_w_prev_epoch[i][j] < 0:
                         l.update_values_rprop[i][j] = np.maximum(l.update_values_rprop[i][j]
                                                   * eta_m, min_update)
-                        l.weights_matrix[i][j] = l.weights_matrix[i][j] + l.weight_diff_prev[i][j]
+                        l.weights_matrix[i][j] = l.weights_matrix[i][j] + l.weight_diff[i][j]
                         # Setta la derivata a 0 poichè deve tornare indietro visto che si è
                         # saltato il minimo.
                         l.der_w[i][j] = 0
                     else:
-                        bombolo = l.der_w[i][j]
-                        ohhhh = l.update_values_rprop[i][j]
-                        l.weight_diff_prev[i][j] = (-1 * np.sign(l.der_w[i][j])) * l.update_values_rprop[i][j]
+                        l.weight_diff[i][j] = (-1 * np.sign(l.der_w[i][j])) * l.update_values_rprop[i][j]
+
+                # Aggiorna i bias.
+                if l.der_b[i] * l.der_b_prev_epoch[i] > 0:
+                    l.update_values_b_rprop[i] = np.minimum(l.update_values_b_rprop[i]
+                                                   *eta_p, max_update)
+                    l.bias_diff[i] = (-1 * np.sign(l.der_b[i])) * l.update_values_b_rprop[i]
+                    l.b[i] = l.b[i] + l.bias_diff[i]
+                elif l.der_b[i] * l.der_b_prev_epoch[i] < 0:
+                    l.update_values_b_rprop[i] = np.maximum(l.update_values_b_rprop[i]
+                                                             * eta_m, min_update)
+                    l.b[i] = l.b[i] + l.bias_diff[i]
+                    # Setta la derivata a 0 poichè deve tornare indietro visto che si è
+                    # saltato il minimo.
+                    l.der_b[i] = 0
+                else:
+                    l.bias_diff[i] = (-1 * np.sign(l.der_b[i])) * l.update_values_b_rprop[i]
+
+
 
 
 
@@ -325,18 +341,21 @@ class Net():
 
                 err_X = err_X + self.error.compute_error(Y, np.transpose(np.expand_dims(x_label[j], axis=0)))
 
-
+            print(err_X)
             # Aggiorna l'errore nel vettore degli errori per stamparlo
             x_err_array.append(err_X)
 
             # Aggiornamento dei pesi.
             curr_net.update_rprop(eta_m, eta_p, 1 * np.exp(-6), 50.0)
-            curr_net.reset_derivatives()
 
             # Salvo le derivate dell'epoca precedente.
             for l in self.array_layers:
-                l.der_w_prev_epoch = l.der_w
-                l.der_b_prev_epoch = l.der_b
+                l.der_w_prev_epoch = cp.deepcopy(l.der_w)
+                l.der_b_prev_epoch = cp.deepcopy(l.der_b)
+
+            curr_net.reset_derivatives()
+
+
 
             # Calcolo dell'errore sul validation set
             err_V = 0

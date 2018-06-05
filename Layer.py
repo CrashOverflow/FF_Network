@@ -26,13 +26,17 @@ class Layer(metaclass=ABCMeta):
 
     # RPROP Parameters.
     # Derivata epoca precedente dei pesi.
-    der_w_prev_epoch = np.ndarray([])
+    der_w_prev_epoch = 0
     # Derivata epoca precedente bias.
-    der_b_prev_epoch = np.ndarray([])
+    der_b_prev_epoch = 0
     # Matrice dei fattori di aggiornamento (UPDATE VALUES)
-    update_values_rprop = np.ndarray([])
+    update_values_rprop = 0
+    # Vettori dei fattori di aggiornamento per i bias (BIAS UPDATE VALUES)
+    update_values_b_rprop = 0
     # Matrice della differenza dei pesi di RPROP. (Weight diff)
-    weight_diff_prev = np.ndarray([])
+    weight_diff = 0
+    # Vettore della differenza dei bias di RPROP. (Bias diff)
+    bias_diff = 0
 
 
     def __init__(self, n_neurons, n_connections):
@@ -55,8 +59,19 @@ class Layer(metaclass=ABCMeta):
     # della matrice per aggiornare i pesi con RPROP.
     # Tutti a 0.1 per update values e tutti a 0 per la differenza dei pesi.
     def init_layer_rprop(self):
-        self.update_values_rprop = np.full(self.der_w.shape, 0.1)
-        self.weight_diff_prev = np.full(self.der_w.shape, 0.0)
+        # Inizializza anche le matrici dei pesi e dei bias perchè si
+        # andrà a sommare e si deve partire da una matrice e da un vettore
+        # con valori settati a 0.
+        self.der_w = np.full(np.shape(self.weights_matrix), 0.0)
+        self.der_b = np.full(np.shape(self.b), 0.0)
+        self.der_w_prev_epoch = np.full(np.shape(self.weights_matrix), 0.0)
+        self.der_b_prev_epoch = np.full(np.shape(self.b), 0.0)
+
+        # Inizializzazione dei valori per la RPROP.
+        self.update_values_rprop = np.full(np.shape(self.weights_matrix), 0.1)
+        self.weight_diff = np.full(np.shape(self.weights_matrix), 0.0)
+        self.update_values_b_rprop = np.full(np.shape(self.b), 0.1)
+        self.bias_diff = np.full(np.shape(self.b), 0.0)
 
 
     # Funzione di attivazione da implementare.
