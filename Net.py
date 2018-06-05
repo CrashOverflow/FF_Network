@@ -276,7 +276,7 @@ class Net():
                     if l.der_w[i][j]*l.der_w_prev_epoch[i][j] > 0:
                         # Allora le derivate hanno lo stesso segno
                         l.update_values_rprop[i][j] = np.minimum(l.update_values_rprop[i][j]
-                                                   *eta_p, max_update)
+                                                   * eta_p, max_update)
                         l.weight_diff[i][j] = (-1 * np.sign(l.der_w[i][j])) * l.update_values_rprop[i][j]
                         l.weights_matrix[i][j] = l.weights_matrix[i][j] + l.weight_diff[i][j]
                     elif l.der_w[i][j]*l.der_w_prev_epoch[i][j] < 0:
@@ -288,6 +288,7 @@ class Net():
                         l.der_w[i][j] = 0
                     else:
                         l.weight_diff[i][j] = (-1 * np.sign(l.der_w[i][j])) * l.update_values_rprop[i][j]
+                        l.weights_matrix[i][j] = l.weights_matrix[i][j] + l.weight_diff[i][j]
 
                 # Aggiorna i bias.
                 if l.der_b[i] * l.der_b_prev_epoch[i] > 0:
@@ -304,7 +305,7 @@ class Net():
                     l.der_b[i] = 0
                 else:
                     l.bias_diff[i] = (-1 * np.sign(l.der_b[i])) * l.update_values_b_rprop[i]
-
+                    l.b[i] = l.b[i] + l.update_values_b_rprop[i]
 
 
 
@@ -349,7 +350,7 @@ class Net():
             curr_net.update_rprop(eta_m, eta_p, 1 * np.exp(-6), 50.0)
 
             # Salvo le derivate dell'epoca precedente.
-            for l in self.array_layers:
+            for l in curr_net.array_layers:
                 l.der_w_prev_epoch = cp.deepcopy(l.der_w)
                 l.der_b_prev_epoch = cp.deepcopy(l.der_b)
 
@@ -370,13 +371,14 @@ class Net():
             # Aggiorna l'errore nel vettore degli errori per stamparlo
             v_err_array.append(err_V)
 
-            if i != 0:
-                if err_V > v_err_array[i - 1]:
-                    break
-                else:
-                    print(err_V)
-                    print(v_err_array[i - 1])
-                    prev_net = cp.deepcopy(curr_net)
+            #if i != 0:
+                #if err_V > v_err_array[i - 1]:
+                 #   break
+                #else:
+            print(err_V)
+            print(v_err_array[i - 1])
+                    #prev_net = cp.deepcopy(curr_net)
+
 
         # Plotta
         plt.plot(x_err_array)
@@ -390,8 +392,8 @@ class Net():
         plt.show()
 
         # Ritorna la rete neurale con errore minore.
+        return curr_net
         #return prev_net
-        return prev_net
 
 
 
