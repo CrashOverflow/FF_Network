@@ -3,6 +3,7 @@ from workdir import Error as Error
 import numpy as np
 import matplotlib.pyplot as plt
 import copy as cp
+import sys
 
 
 # Classe che rappresenta una singola rete Feed-Forward Full Connected.
@@ -317,7 +318,8 @@ class Net():
 
         x_err_array = []
         v_err_array = []
-
+        # inizializzazione dell'errore ottimo sul validation
+        opt_err_v = sys.maxsize
         # Inizializza la matrice dei valori di aggiornamento a 0.1
         self.init_rprop()
 
@@ -359,7 +361,7 @@ class Net():
 
 
             # Calcolo dell'errore sul validation set
-            err_V = 0
+            err_V = 0.0
             for j in range(0, v_size):
                 Y = curr_net.forward(V[j])
                 # Controllo per applicare softmax in caso di CrossEntropy.
@@ -371,13 +373,25 @@ class Net():
             # Aggiorna l'errore nel vettore degli errori per stamparlo
             v_err_array.append(err_V)
 
-            #if i != 0:
-                #if err_V > v_err_array[i - 1]:
-                 #   break
-                #else:
+            # Salvo l'errore minimo sul validation
+            if i % 5 == 0:
+                print(str(i))
+                if err_V < opt_err_v:
+                    opt_err_v = err_V
+                    prev_net = cp.deepcopy(curr_net)
+                    print("BEST Net" + str(i))
+
+                # calcolo la generalization loss per ogni epoca
+                GL_epoch = 100 * ((err_V/opt_err_v)-1.0)
+                print("GL " + str(GL_epoch))
+                # criterio di fermata
+                alpha = 3
+                if GL_epoch > alpha:
+                    break
+
+
             print(err_V)
             print(v_err_array[i - 1])
-                    #prev_net = cp.deepcopy(curr_net)
 
 
         # Plotta
@@ -392,8 +406,8 @@ class Net():
         plt.show()
 
         # Ritorna la rete neurale con errore minore.
-        return curr_net
-        #return prev_net
+        #return curr_net
+        return prev_net
 
 
 
