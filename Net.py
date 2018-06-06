@@ -157,8 +157,8 @@ class Net():
                         np.dot(self.array_layers[i].delta, np.expand_dims(X, axis = 0))
             else:
                 self.array_layers[i].der_w = \
-                    np.dot(np.transpose(self.array_layers[i].delta),
-                           self.array_layers[i - 1].z)
+                    np.dot(self.array_layers[i].delta,
+                           np.transpose(self.array_layers[i - 1].z))
 
             # b' = delta
             self.array_layers[i].der_b = self.array_layers[i].delta
@@ -256,8 +256,8 @@ class Net():
                     np.dot(self.array_layers[i].delta, np.expand_dims(X, axis=0))
             else:
                 self.array_layers[i].der_w = self.array_layers[i].der_w +\
-                           np.dot(np.transpose(self.array_layers[i].delta),
-                           self.array_layers[i - 1].z)
+                           np.dot(self.array_layers[i].delta,
+                           np.transpose(self.array_layers[i - 1].z))
 
             # b' = delta
             self.array_layers[i].der_b = self.array_layers[i].der_b + self.array_layers[i].delta

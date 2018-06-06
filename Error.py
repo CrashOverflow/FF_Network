@@ -32,5 +32,5 @@ class CrossEntropy(Error):
         return np.nan_to_num(self.softmax(Y) - T)
 
     def compute_error(self, Y, T):
-        return -1 * np.sum(T * np.log(Y))
+        return -1 * np.sum(T * np.log10(Y))
 

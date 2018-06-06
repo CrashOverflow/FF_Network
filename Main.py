@@ -12,7 +12,10 @@ train_set = mnist.train.images
 label_train_set = mnist.train.labels
 validation_set = mnist.validation.images
 label_validation_set = mnist.validation.labels
-t = mnist.test
+#t = mnist.test
+
+test_set = mnist.test.images
+label_test_set = mnist.test.labels
 
 n_f = np.size(train_set, 1)
 print(n_f)
@@ -21,10 +24,12 @@ label_num = len(label_train_set[0])
 #print("Started building the Feed Forward Full Connected Neural Network! \n")
 for i in range(0,10):
     print("NETWORK"+str(i)+"\n")
-    my_net = N.Net(n_f, [10, label_num], [1, 0], E.CrossEntropy())
+    my_net = N.Net(n_f, [8, 15, label_num], [1, 1, 0], E.CrossEntropy())
     #new_net = my_net.online_train(train_set, label_train_set, validation_set, label_validation_set, 0.1, 100)
     new_net = my_net.rprop_batch_train(train_set, label_train_set, validation_set, label_validation_set, 100)
     print("Accuracy of trained network on Validation: " + str(new_net.test(validation_set, label_validation_set)) + "\n")
+    print("Accuracy of trained network on Test: "+ str(new_net.test(test_set, label_test_set)) + "\n")
+
 
 #my_net.print()
 #print("Accuracy of trained network on Validation: "+ str(new_net.test(validation_set, label_validation_set)) +"\n")
