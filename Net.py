@@ -4,6 +4,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import copy as cp
 import sys
+from workdir import StopCriteria as Stop
 
 
 # Classe che rappresenta una singola rete Feed-Forward Full Connected.
@@ -312,13 +313,22 @@ class Net():
 
 
 
-    def rprop_batch_train(self, X, x_label, V, v_label, epoch, eta_m = 0.5, eta_p = 1.2):
+    def rprop_train(self, X, x_label, V, v_label, epoch, stop_criteria, eta_m = 0.5, eta_p = 1.2):
         x_size = np.size(X, 0) // 50
         v_size = np.size(V, 0) // 50
-
         x_err_array = []
         v_err_array = []
-        # inizializzazione dell'errore ottimo sul validation
+        stop_crit = 0
+
+
+        # 0 sta per GL ed 1 per PQ.
+        # Utilizziamo un booleano per non fare sempre la verifica all'interno.
+        if isinstance(stop_criteria, Stop.GL):
+            stop_crit = 0
+        else:
+            stop_crit = 1
+
+        # Inizializzazione dell'errore ottimo sul validation
         opt_err_v = sys.maxsize
         # Inizializza la matrice dei valori di aggiornamento a 0.1
         self.init_rprop()
@@ -327,7 +337,7 @@ class Net():
         prev_net = cp.deepcopy(self)
 
 
-        for i in range(0, epoch - 1):
+        for i in range(1, epoch):
             err_X = 0
             print("Current status: EPOCH " + str(i) + "\n")
             for j in range(0, x_size):
@@ -373,21 +383,24 @@ class Net():
             # Aggiorna l'errore nel vettore degli errori per stamparlo
             v_err_array.append(err_V)
 
-            # Salvo l'errore minimo sul validation
-            if i % 5 == 0:
+            if i % stop_criteria.strip == 0:
                 print(str(i))
                 if err_V < opt_err_v:
                     opt_err_v = err_V
                     prev_net = cp.deepcopy(curr_net)
                     print("BEST Net" + str(i))
 
-                # calcolo la generalization loss per ogni epoca
-                GL_epoch = 100 * ((err_V/opt_err_v)-1.0)
-                print("GL " + str(GL_epoch))
-                # criterio di fermata
-                alpha = 3
-                if GL_epoch > alpha:
-                    break
+                # Generalization loss stopping criteria.
+                if stop_crit == 0:
+                    # Calcolo l'errore ottimo ogni strip epoche per
+                    # evitare picchi che fermerebbero subito il processo
+                    # di apprendimento.
+
+                    if(stop_criteria.stop(err_V, opt_err_v)):
+                        break
+                else:
+                    if (stop_criteria.stop(err_V, opt_err_v, i, x_err_array)):
+                        break
 
 
             print(err_V)
