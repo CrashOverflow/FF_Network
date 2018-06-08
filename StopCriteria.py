@@ -17,7 +17,7 @@ class GL(StopCriteria):
     def stop(self, curr_err, opt_err):
         # Calcolo la generalization loss per ogni epoca
         GL_epoch = 100 * ((curr_err / opt_err) - 1.0)
-        print("GL_epoch" + str(GL_epoch) + "\n")
+        #print("GL_epoch" + str(GL_epoch) + "\n")
 
         if GL_epoch > self.alpha:
             return 1

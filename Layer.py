@@ -40,11 +40,15 @@ class Layer(metaclass=ABCMeta):
 
 
     def __init__(self, n_neurons, n_connections):
-        # Costruisci la matrice dei pesi in maniera random tra 0 e 1.
-        self.weights_matrix = 1 - 2 * np.random.rand(n_neurons, n_connections)
-        # Array dei pesi per il bias random tra 0 e 1.
+
+        # Costruisci la matrice dei pesi in maniera random tra -x e x.
+
+        self.weights_matrix = np.random.uniform(-0.5, 0.5, (n_neurons, n_connections))
+
+        # Array dei pesi per il bias random tra -x e x.
         # E' un vettore colonna.
-        self.b = 1 - 2 * np.random.rand(n_neurons, 1)
+
+        self.b = np.random.uniform(-0.5, 0.5, (n_neurons, 1))
 
     def print_weights_matrix(self):
         print(self.weights_matrix)
@@ -58,19 +62,24 @@ class Layer(metaclass=ABCMeta):
     # Funzione di inizializzazione on-demand
     # della matrice per aggiornare i pesi con RPROP.
     # Tutti a 0.1 per update values e tutti a 0 per la differenza dei pesi.
+
     def init_layer_rprop(self):
+
         # Inizializza anche le matrici dei pesi e dei bias perchè si
         # andrà a sommare e si deve partire da una matrice e da un vettore
         # con valori settati a 0.
+
         self.der_w = np.full(np.shape(self.weights_matrix), 0.0)
         self.der_b = np.full(np.shape(self.b), 0.0)
         self.der_w_prev_epoch = np.full(np.shape(self.weights_matrix), 0.0)
         self.der_b_prev_epoch = np.full(np.shape(self.b), 0.0)
 
         # Inizializzazione dei valori per la RPROP.
-        self.update_values_rprop = np.full(np.shape(self.weights_matrix), 0.1)
+        # I valori 0.05 e 0.2 sono suggeriti dal paper "Early stopping, but when?"
+
+        self.update_values_rprop = np.random.uniform(0.05, 0.2, np.shape(self.weights_matrix))
         self.weight_diff = np.full(np.shape(self.weights_matrix), 0.0)
-        self.update_values_b_rprop = np.full(np.shape(self.b), 0.1)
+        self.update_values_b_rprop = np.random.uniform(0.05, 0.2, np.shape(self.b))
         self.bias_diff = np.full(np.shape(self.b), 0.0)
 
 
@@ -90,9 +99,8 @@ class Layer_s(Layer):
 
     # Sigmoide = 1 / (1 + e ^ - x)
     def actfun(self, x):
-        #return logistic.pdf(x)
         return logistic.cdf(x)
-        #return 1 / (1 + np.exp(-x))
+
 
     # Derivata = s(x) * (1 - s(x))
     # Implementato usando il prodotto punto-punto con numpy

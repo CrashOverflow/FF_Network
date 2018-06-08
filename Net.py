@@ -181,8 +181,8 @@ class Net():
     #    - eta: learning rate
     #    - epoch: numero di epoche.
     def online_train(self, X, x_label, V, v_label, eta, epoch):
-        x_size = np.size(X, 0) // 100
-        v_size = np.size(V, 0) // 50
+        x_size = np.size(X, 0)
+        v_size = np.size(V, 0)
 
         x_err_array = []
         v_err_array = []
@@ -190,7 +190,7 @@ class Net():
         curr_net = cp.deepcopy(self)
         prev_net = cp.deepcopy(self)
 
-        for i in range(0, epoch-1):
+        for i in range(1, epoch + 1):
             print("Current status: EPOCH " + str(i) + "\n")
             for j in range(0, x_size):
                 curr_net.backprop(X[j], x_label[j])
@@ -224,11 +224,11 @@ class Net():
             v_err_array.append(err_V)
 
             if i != 0:
-                if err_V > v_err_array[i-1]:
+                if err_V > v_err_array[i-2]:
                     break
                 else:
                     print(err_V)
-                    print(v_err_array[i-1])
+                    print(v_err_array[i-2])
                     prev_net = cp.deepcopy(curr_net)
 
 
@@ -314,12 +314,12 @@ class Net():
 
 
     def rprop_train(self, X, x_label, V, v_label, epoch, stop_criteria, eta_m = 0.5, eta_p = 1.2):
-        x_size = np.size(X, 0) // 50
-        v_size = np.size(V, 0) // 50
+        x_size = np.size(X, 0)
+        v_size = np.size(V, 0)
         x_err_array = []
         v_err_array = []
         stop_crit = 0
-
+        best_net = 0
 
         # 0 sta per GL ed 1 per PQ.
         # Utilizziamo un booleano per non fare sempre la verifica all'interno.
@@ -330,6 +330,7 @@ class Net():
 
         # Inizializzazione dell'errore ottimo sul validation
         opt_err_v = sys.maxsize
+        min_err = sys.maxsize
         # Inizializza la matrice dei valori di aggiornamento a 0.1
         self.init_rprop()
 
@@ -337,7 +338,7 @@ class Net():
         prev_net = cp.deepcopy(self)
 
 
-        for i in range(1, epoch):
+        for i in range(epoch):
             err_X = 0
             print("Current status: EPOCH " + str(i) + "\n")
             for j in range(0, x_size):
@@ -355,11 +356,16 @@ class Net():
                 err_X = err_X + self.error.compute_error(Y, np.transpose(np.expand_dims(x_label[j], axis=0)))
 
             print(err_X)
+
             # Aggiorna l'errore nel vettore degli errori per stamparlo
             x_err_array.append(err_X)
 
-            # Aggiornamento dei pesi.
-            curr_net.update_rprop(eta_m, eta_p, 1 * np.exp(-6), 50.0)
+            # Aggiornamento dei pesi. (Parametri suggeriti nel paper su RPROP)
+            #curr_net.update_rprop(eta_m, eta_p, 1 * np.exp(-6), 50.0)
+
+            # Aggiornamento dei pesi. (Parametri suggeriti nel paper "Early stopping, but when?").
+            # Con max = 1.0 si hanno discese e salite più smooth.
+            curr_net.update_rprop(eta_m, eta_p, 1 * np.exp(-6), 1.0)
 
             # Salvo le derivate dell'epoca precedente.
             for l in curr_net.array_layers:
@@ -383,12 +389,15 @@ class Net():
             # Aggiorna l'errore nel vettore degli errori per stamparlo
             v_err_array.append(err_V)
 
+            if err_V < min_err:
+                min_err = err_V
+                prev_net = cp.deepcopy(curr_net)
+                best_net = i
+
             if i % stop_criteria.strip == 0:
-                print(str(i))
+                #print(str(i))
                 if err_V < opt_err_v:
                     opt_err_v = err_V
-                    prev_net = cp.deepcopy(curr_net)
-                    print("BEST Net" + str(i))
 
                 # Generalization loss stopping criteria.
                 if stop_crit == 0:
@@ -406,6 +415,8 @@ class Net():
             print(err_V)
             print(v_err_array[i - 1])
 
+
+        print("Best network on validation set: " + str(best_net) + "\n")
 
         # Plotta
         plt.plot(x_err_array)
@@ -426,7 +437,7 @@ class Net():
 
     # Funzione di testing della rete
     def test(self, X, X_labels):
-        x_len = len(X) // 50
+        x_len = len(X)
         print(x_len)
         correct = 0
         for i in range(0, x_len):
@@ -440,7 +451,7 @@ class Net():
             if np.all(np.transpose(np.expand_dims(X_labels[i], axis=0)) == Y_v):
                 correct = correct + 1
 
-        return correct
+        return (correct * 100) / x_len
 
 
 

@@ -25,11 +25,12 @@ label_num = len(label_train_set[0])
 #print("Started building the Feed Forward Full Connected Neural Network! \n")
 for i in range(0,10):
     print("NETWORK"+str(i)+"\n")
-    my_net = N.Net(n_f, [10, label_num], [1, 0], E.CrossEntropy())
-    #new_net = my_net.online_train(train_set, label_train_set, validation_set, label_validation_set, 0.1, 100)
-    new_net = my_net.rprop_train(train_set, label_train_set, validation_set, label_validation_set, 100,  Stop.PQ(0.5, 5))
-    print("Accuracy of trained network on Validation: " + str(new_net.test(validation_set, label_validation_set)) + "\n")
-    print("Accuracy of trained network on Test: "+ str(new_net.test(test_set, label_test_set)) + "\n")
+    my_net = N.Net(n_f, [8, label_num], [1, 0], E.CrossEntropy())
+    #new_net = my_net.online_train(train_set[:1000,], label_train_set[:1000,], validation_set[:500,], label_validation_set[:500,], 0.1, 100)
+    new_net = my_net.rprop_train(train_set[:500,], label_train_set[:500,], validation_set[:250,], label_validation_set[:250,], 100,  Stop.GL(5, 5))
+    print("Network " + str(i) + ": \n")
+    print("Accuracy of trained network on Validation: " + str(new_net.test(validation_set[:250,], label_validation_set[:250,])) + "\n")
+    print("Accuracy of trained network on Test: "+ str(new_net.test(test_set[:250,], label_test_set[:250,])) + "\n")
 
 
 #my_net.print()
