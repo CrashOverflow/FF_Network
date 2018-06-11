@@ -313,7 +313,7 @@ class Net():
 
 
 
-    def rprop_train(self, X, x_label, V, v_label, epoch, stop_criteria, eta_m = 0.5, eta_p = 1.2):
+    def rprop_train(self, X, x_label, V, v_label, epoch, stop_criteria, eta_m = 0.5, eta_p = 1.05):
         x_size = np.size(X, 0)
         v_size = np.size(V, 0)
         x_err_array = []
@@ -340,7 +340,7 @@ class Net():
 
         for i in range(epoch):
             err_X = 0
-            print("Current status: EPOCH " + str(i) + "\n")
+            #print("Current status: EPOCH " + str(i) + "\n")
             for j in range(0, x_size):
                 curr_net.backprop(X[j], x_label[j])
                 curr_net.cumulate_derivatives(X[j])
@@ -355,17 +355,17 @@ class Net():
 
                 err_X = err_X + self.error.compute_error(Y, np.transpose(np.expand_dims(x_label[j], axis=0)))
 
-            print(err_X)
+            #print(err_X)
 
             # Aggiorna l'errore nel vettore degli errori per stamparlo
             x_err_array.append(err_X)
 
             # Aggiornamento dei pesi. (Parametri suggeriti nel paper su RPROP)
-            #curr_net.update_rprop(eta_m, eta_p, 1 * np.exp(-6), 50.0)
+            curr_net.update_rprop(eta_m, eta_p, 1 * np.exp(-6), 50.0)
 
             # Aggiornamento dei pesi. (Parametri suggeriti nel paper "Early stopping, but when?").
             # Con max = 1.0 si hanno discese e salite più smooth.
-            curr_net.update_rprop(eta_m, eta_p, 1 * np.exp(-6), 1.0)
+            #curr_net.update_rprop(eta_m, eta_p, 1 * np.exp(-6), 1.0)
 
             # Salvo le derivate dell'epoca precedente.
             for l in curr_net.array_layers:
@@ -389,48 +389,48 @@ class Net():
             # Aggiorna l'errore nel vettore degli errori per stamparlo
             v_err_array.append(err_V)
 
-            if err_V < min_err:
-                min_err = err_V
+
+            if err_V < opt_err_v:
+                opt_err_v = err_V
                 prev_net = cp.deepcopy(curr_net)
                 best_net = i
 
-            if i % stop_criteria.strip == 0:
-                #print(str(i))
-                if err_V < opt_err_v:
-                    opt_err_v = err_V
+            # Generalization loss stopping criteria.
+            if stop_crit == 0:
+                # Calcolo l'errore ottimo ogni strip epoche per
+                # evitare picchi che fermerebbero subito il processo
+                # di apprendimento.
 
-                # Generalization loss stopping criteria.
-                if stop_crit == 0:
-                    # Calcolo l'errore ottimo ogni strip epoche per
-                    # evitare picchi che fermerebbero subito il processo
-                    # di apprendimento.
-
-                    if(stop_criteria.stop(err_V, opt_err_v)):
-                        break
-                else:
+                if(stop_criteria.stop(err_V, opt_err_v)):
+                    break
+            else:
+                # La strip è la k del paper, ovvero l'intervallo di epoche ogni quale
+                # effettuare il controllo.
+                if i % stop_criteria.strip == 0 and i != 0:
                     if (stop_criteria.stop(err_V, opt_err_v, i, x_err_array)):
                         break
 
 
-            print(err_V)
-            print(v_err_array[i - 1])
+            #print(err_V)
+            #print(v_err_array[i - 1])
 
 
-        print("Best network on validation set: " + str(best_net) + "\n")
+        #print("Best network on validation set: " + str(best_net) + "\n")
 
         # Plotta
-        plt.plot(x_err_array)
-        plt.xlabel('Epoch')
-        plt.ylabel('Error')
-        plt.show()
+        #plt.plot(x_err_array)
+        #plt.xlabel('Epoch')
+        #plt.ylabel('Error')
+        #plt.show()
 
-        plt.plot(v_err_array)
-        plt.xlabel('Epoch')
-        plt.ylabel('Error')
-        plt.show()
+        #plt.plot(v_err_array)
+        #plt.xlabel('Epoch')
+        #plt.ylabel('Error')
+        #plt.show()
 
         # Ritorna la rete neurale con errore minore.
         #return curr_net
+        prev_net.epoch = i
         return prev_net
 
 
@@ -438,7 +438,7 @@ class Net():
     # Funzione di testing della rete
     def test(self, X, X_labels):
         x_len = len(X)
-        print(x_len)
+        #print(x_len)
         correct = 0
         for i in range(0, x_len):
             Y_p = self.forward(X[i])
@@ -451,7 +451,7 @@ class Net():
             if np.all(np.transpose(np.expand_dims(X_labels[i], axis=0)) == Y_v):
                 correct = correct + 1
 
-        return (correct * 100) / x_len
+        self.accuracy = (correct * 100) / x_len
 
 
 
