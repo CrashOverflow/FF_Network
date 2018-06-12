@@ -45,15 +45,16 @@ for i in range(len(GL_alpha)):
 
         print("GL Alpha = " + str(GL_alpha[i]) + ", PQ Alpha = " + str(PQ_alpha[i]) + ", Neurons = " + str(n_neurons) + "\n")
 
-        for i in range(0, 10):
-            print("NETWORK"+str(i)+"\n")
+        for j in range(0, 2):
+            print("NETWORK"+str(j)+"\n")
             my_net = N.Net(n_f, [n_neurons, label_num], [1, 0], E.CrossEntropy())
             #new_net = my_net.online_train(train_set[:1000,], label_train_set[:1000,], validation_set[:500,], label_validation_set[:500,], 0.1, 100)
             GL_net = my_net.rprop_train(train_set[:500,], label_train_set[:500,], validation_set[:250,], label_validation_set[:250,], 100,  Stop.GL(GL_alpha[i]))
             PQ_net = my_net.rprop_train(train_set[:500,], label_train_set[:500,], validation_set[:250,], label_validation_set[:250,], 100,  Stop.PQ(PQ_alpha[i], 5))
             GL_net.test(validation_set[:250,], label_validation_set[:250,])
             PQ_net.test(validation_set[:250,], label_validation_set[:250,])
-            #print("Network " + str(i) + " accuracy : " + str(GL_net.accuracy) + ", Epochs: " + str(GL_net.epoch) + "\n")
+            print("Network GL accuracy : " + str(GL_net.accuracy) + ", Epochs: " + str(GL_net.epoch) + "\n")
+            print("Network PQ accuracy : " + str(PQ_net.accuracy) + ", Epochs: " + str(PQ_net.epoch) + "\n")
 
             # Somma delle epoche e dell'accuratezza per la combinazione n_neurons e in totale su 10 reti.
             tot_accuracy_GL = tot_accuracy_GL + GL_net.accuracy
@@ -61,8 +62,8 @@ for i in range(len(GL_alpha)):
             tot_epochs_GL = tot_epochs_GL + GL_net.epoch
             tot_epochs_PQ = tot_epochs_PQ + PQ_net.epoch
 
-    Mean_epochs_accuracy_GL[i] = (tot_accuracy_GL / (len(Net_neurons) * 10), tot_epochs_GL / (len(Net_neurons) * 10))
-    Mean_epochs_accuracy_PQ[i] = (tot_accuracy_PQ / (len(Net_neurons) * 10), tot_epochs_PQ / (len(Net_neurons) * 10))
+    Mean_epochs_accuracy_GL.append((tot_accuracy_GL / (len(Net_neurons) * 2), tot_epochs_GL / (len(Net_neurons) * 2)))
+    Mean_epochs_accuracy_PQ.append((tot_accuracy_PQ / (len(Net_neurons) * 2), tot_epochs_PQ / (len(Net_neurons) * 2)))
 
     print("GL: Mean epochs accuracy = " + str(Mean_epochs_accuracy_GL[i]) + "\n")
     print("PQ: Mean epochs accuracy = " + str(Mean_epochs_accuracy_PQ[i]) + "\n")
