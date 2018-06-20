@@ -12,6 +12,10 @@ class Error(metaclass=ABCMeta):
     def fun(self, Y, T):
         pass
 
+    @abstractmethod
+    def compute_error(self, Y, T):
+        pass
+
 
 class TSS(Error):
     def fun(self, Y, T):
