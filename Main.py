@@ -20,8 +20,8 @@ label_num = len(label_train_set[0])
 
 # Fornisco 10 valori diversi di alpha da fornire sia a GL che PQ per vedere come si comportano.
 # per ogni alpha si effettua il test su rete e si restituisce la coppia (accuratezza media, media epoche).
-GL_alpha = [2, 4, 6, 8, 10, 11, 12, 14, 16, 20]
-PQ_alpha = [0.001, 0.002, 0.003, 0.004, 0.005, 0.008, 0.010, 0.011, 0.015, 0.018]
+GL_alpha = [46, 50, 54, 56, 66, 76, 86, 96, 106, 116]
+PQ_alpha = [0.003, 0.005, 0.008, 0.010, 0.012, 0.014, 0.018, 0.021, 0.024, 0.030]
 # Al variare dei neuroni.
 Net_neurons = [2, 4, 8, 16, 24, 32]
 
@@ -49,8 +49,8 @@ for i in range(len(GL_alpha)):
             print("NETWORK"+str(j)+"\n")
             my_net = N.Net(n_f, [n_neurons, label_num], [1, 0], E.CrossEntropy())
             #new_net = my_net.online_train(train_set[:1000,], label_train_set[:1000,], validation_set[:500,], label_validation_set[:500,], 0.1, 100)
-            GL_net = my_net.rprop_train(train_set[:500,], label_train_set[:500,], validation_set[:250,], label_validation_set[:250,], 100,  Stop.GL(GL_alpha[i]))
-            PQ_net = my_net.rprop_train(train_set[:500,], label_train_set[:500,], validation_set[:250,], label_validation_set[:250,], 100,  Stop.PQ(PQ_alpha[i], 5))
+            GL_net = my_net.rprop_train(train_set[:500,], label_train_set[:500,], validation_set[:250,], label_validation_set[:250,], 300,  Stop.GL(GL_alpha[i]))
+            PQ_net = my_net.rprop_train(train_set[:500,], label_train_set[:500,], validation_set[:250,], label_validation_set[:250,], 300,  Stop.PQ(PQ_alpha[i], 5))
             GL_net.test(validation_set[:250,], label_validation_set[:250,])
             PQ_net.test(validation_set[:250,], label_validation_set[:250,])
             print("Network GL accuracy : " + str(GL_net.accuracy) + ", Epochs: " + str(GL_net.epoch) + "\n")
@@ -67,14 +67,21 @@ for i in range(len(GL_alpha)):
 
     print("GL: Mean epochs accuracy = " + str(Mean_epochs_accuracy_GL[i]) + "\n")
     print("PQ: Mean epochs accuracy = " + str(Mean_epochs_accuracy_PQ[i]) + "\n")
+
 print("GL")
 print(Mean_epochs_accuracy_GL)
 print("PQ")
 print(Mean_epochs_accuracy_PQ)
-#plt.plot(*zip(*Mean_epochs_accuracy_GL), label="GL")
-#plt.plot(*zip(*Mean_epochs_accuracy_PQ), label="PQ")
-#plt.xlabel('epoch')
-#plt.ylabel('accuracy')
-#plt.show()
+
+plt.scatter(*zip(*Mean_epochs_accuracy_GL), label="GL")
+plt.title('Early stopping GL')
+plt.xlabel('epoch')
+plt.ylabel('accuracy')
+plt.show()
+plt.scatter(*zip(*Mean_epochs_accuracy_PQ), label="PQ")
+plt.title('Early stopping PQ')
+plt.xlabel('epoch')
+plt.ylabel('accuracy')
+plt.show()
 
 
